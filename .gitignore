@@ -1,0 +1,70 @@
+# ==========================================
+# Mascotas Córdoba - Git Ignore Configuration
+# ==========================================
+
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Compiled outputs
+dist/
+*/dist/
+out-tsc/
+*/out-tsc/
+bazel-out/
+
+# Angular cache & tooling
+.angular/
+*/.angular/
+
+# Java / Spring Boot build artifacts
+target/
+*/target/
+.gradle/
+build/
+*/build/
+*.jar
+*.war
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+
+# Affinity Designer
+*.af
+docs/*.af
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files & cache
+tmp/
+*/tmp/
+.sass-cache/
+coverage/
+.history/
+
+# Operating System files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# IDEs and Editors
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+
+# Agent instructions (do not commit)
+GEMINI.md
+README.md
