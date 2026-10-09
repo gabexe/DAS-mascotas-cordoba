@@ -70,11 +70,11 @@ import { AuthService } from '../../../core/services/auth.service';
           <!-- Acceso rápido discreto (sin cajas llamativas ni sombras) -->
           <div class="discreet-demo-area">
             <span class="demo-subtle-label">Acceso de prueba:</span>
-            <button type="button" (click)="usarCredencialesDemo('20-35444555-9', '1234')" class="demo-text-btn">
+            <button type="button" (click)="usarCredencialesDemo('20-12345678-9', '1234')" class="demo-text-btn">
               Huellitas Cordobesas
             </button>
             <span class="demo-sep">·</span>
-            <button type="button" (click)="usarCredencialesDemo('27-38999888-4', '1234')" class="demo-text-btn">
+            <button type="button" (click)="usarCredencialesDemo('27-12345678-4', '1234')" class="demo-text-btn">
               Patitas del Sur
             </button>
           </div>

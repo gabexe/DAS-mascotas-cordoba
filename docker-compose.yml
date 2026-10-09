@@ -24,9 +24,15 @@ services:
     depends_on:
       sqlserver:
         condition: service_healthy
+    volumes:
+      - ./database:/scripts:ro
     entrypoint: >
       /bin/bash -c "
       /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P 'MascotasCordoba2026!' -C -Q \"IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'mascotas_cordoba') CREATE DATABASE mascotas_cordoba;\"
+      if [ -f /scripts/01_schema.sql ]; then
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P 'MascotasCordoba2026!' -C -d mascotas_cordoba -i /scripts/01_schema.sql
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P 'MascotasCordoba2026!' -C -d mascotas_cordoba -i /scripts/02_seed_data.sql
+      fi
       "
 
 volumes:

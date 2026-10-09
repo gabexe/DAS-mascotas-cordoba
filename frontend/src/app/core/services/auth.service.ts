@@ -6,7 +6,7 @@ const STORAGE_KEY = 'mascotas_cba_refugio_user';
 const USUARIOS_MOCK: UsuarioRefugio[] = [
   {
     id_ciudadano: 1,
-    cuil: '20-35444555-9',
+    cuil: '20-12345678-9',
     nombre: 'Martín',
     apellido: 'Gómez',
     correo: 'martin.gomez@huellitascba.org.ar',
@@ -23,7 +23,7 @@ const USUARIOS_MOCK: UsuarioRefugio[] = [
   },
   {
     id_ciudadano: 2,
-    cuil: '27-38999888-4',
+    cuil: '27-12345678-4',
     nombre: 'Camila',
     apellido: 'Fernández',
     correo: 'camila@patitasdelsur.org.ar',

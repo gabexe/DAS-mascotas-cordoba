@@ -1,0 +1,26 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: mascotas-cordoba-backend
+
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;databaseName=mascotas_cordoba;encrypt=true;trustServerCertificate=true
+    username: sa
+    password: MascotasCordoba2026!
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.SQLServerDialect
+
+app:
+  cors:
+    allowed-origins: "http://localhost:4200"
