@@ -1,6 +1,7 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { mensajeDeError } from '../../../core/http/api-error';
 import { PublicacionService } from '../../../core/services/publicacion.service';
 import { EstadoPublicacion } from '../../../core/models/publicacion.model';
 
@@ -81,7 +82,16 @@ import { EstadoPublicacion } from '../../../core/models/publicacion.model';
         </div>
 
         <!-- Grilla de Mascotas -->
-        @if (publicacionesFiltradas().length === 0) {
+        @if (errorMessage()) {
+          <div class="empty-state" role="alert">
+            <p>{{ errorMessage() }}</p>
+            <button type="button" class="btn-modal-cancel" (click)="cargar()">Reintentar</button>
+          </div>
+        }
+
+        @if (loading()) {
+          <div class="empty-state"><p>Cargando publicaciones…</p></div>
+        } @else if (publicacionesFiltradas().length === 0) {
           <div class="empty-state">
             <p>No se encontraron publicaciones que coincidan con la búsqueda o filtro seleccionado.</p>
           </div>
@@ -744,7 +754,7 @@ import { EstadoPublicacion } from '../../../core/models/publicacion.model';
     }
   `]
 })
-export class PublicacionesListComponent {
+export class PublicacionesListComponent implements OnInit {
   private authService = inject(AuthService);
   private pubService = inject(PublicacionService);
 
@@ -753,7 +763,25 @@ export class PublicacionesListComponent {
   busqueda = signal<string>('');
   publicacionAFinalizar = signal<number | null>(null);
 
-  allPublicaciones = this.pubService.getPublicaciones();
+  allPublicaciones = this.pubService.publicaciones;
+  loading = signal(true);
+  errorMessage = signal<string | null>(null);
+
+  ngOnInit(): void {
+    this.cargar();
+  }
+
+  cargar(): void {
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    this.pubService.cargarPublicaciones().subscribe({
+      next: () => this.loading.set(false),
+      error: err => {
+        this.errorMessage.set(mensajeDeError(err, 'No se pudieron cargar las publicaciones.'));
+        this.loading.set(false);
+      }
+    });
+  }
 
   publicacionesRefugio = computed(() => {
     const currentRefugioId = this.refugio()?.id_refugio;
@@ -798,7 +826,10 @@ export class PublicacionesListComponent {
   }
 
   cambiarEstado(nro: number, nuevoEstado: EstadoPublicacion): void {
-    this.pubService.cambiarEstado(nro, nuevoEstado);
+    this.errorMessage.set(null);
+    this.pubService.cambiarEstado(nro, nuevoEstado).subscribe({
+      error: err => this.errorMessage.set(mensajeDeError(err, 'No se pudo cambiar el estado de la publicación.'))
+    });
   }
 
   solicitarFinalizar(nro: number): void {
@@ -812,7 +843,7 @@ export class PublicacionesListComponent {
   ejecutarFinalizar(): void {
     const nro = this.publicacionAFinalizar();
     if (nro !== null) {
-      this.pubService.cambiarEstado(nro, 'Finalizada');
+      this.cambiarEstado(nro, 'Finalizada');
       this.publicacionAFinalizar.set(null);
     }
   }

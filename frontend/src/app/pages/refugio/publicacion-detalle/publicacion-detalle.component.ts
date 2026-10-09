@@ -1,7 +1,8 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { mensajeDeError } from '../../../core/http/api-error';
 import { PublicacionService } from '../../../core/services/publicacion.service';
-import { EstadoPublicacion } from '../../../core/models/publicacion.model';
+import { EstadoPublicacion, PublicacionAdopcion } from '../../../core/models/publicacion.model';
 
 @Component({
   selector: 'app-publicacion-detalle',
@@ -14,9 +15,11 @@ import { EstadoPublicacion } from '../../../core/models/publicacion.model';
         <a routerLink="/publicaciones" class="back-link">← Volver a Publicaciones</a>
       </div>
 
-      @if (!publicacion()) {
+      @if (loading()) {
+        <div class="not-found"><p>Cargando publicación…</p></div>
+      } @else if (!publicacion()) {
         <div class="not-found">
-          <p>Publicación no encontrada.</p>
+          <p>{{ errorMessage() || 'Publicación no encontrada.' }}</p>
           <a routerLink="/publicaciones" class="btn-link">Volver al listado</a>
         </div>
       } @else {
@@ -260,12 +263,27 @@ import { EstadoPublicacion } from '../../../core/models/publicacion.model';
     }
   `]
 })
-export class PublicacionDetalleComponent {
+export class PublicacionDetalleComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private pubService = inject(PublicacionService);
 
-  nroPublicacion = computed(() => Number(this.route.snapshot.paramMap.get('id')));
-  publicacion = computed(() => this.pubService.getPublicacionById(this.nroPublicacion()));
+  nroPublicacion = Number(this.route.snapshot.paramMap.get('id'));
+  publicacion = signal<PublicacionAdopcion | null>(null);
+  loading = signal(true);
+  errorMessage = signal<string | null>(null);
+
+  ngOnInit(): void {
+    this.pubService.obtenerPublicacion(this.nroPublicacion).subscribe({
+      next: pub => {
+        this.publicacion.set(pub);
+        this.loading.set(false);
+      },
+      error: err => {
+        this.errorMessage.set(mensajeDeError(err, 'Publicación no encontrada.'));
+        this.loading.set(false);
+      }
+    });
+  }
 
   cambiarEstado(nuevoEstado: EstadoPublicacion): void {
     const pub = this.publicacion();
@@ -274,7 +292,11 @@ export class PublicacionDetalleComponent {
         const confirmar = confirm('¿Desea finalizar esta publicación? La mascota ya no estará disponible para adopción y la acción es irreversible.');
         if (!confirmar) return;
       }
-      this.pubService.cambiarEstado(pub.nro_publicacion, nuevoEstado);
+      this.errorMessage.set(null);
+      this.pubService.cambiarEstado(pub.nro_publicacion, nuevoEstado).subscribe({
+        next: actualizada => this.publicacion.set(actualizada),
+        error: err => this.errorMessage.set(mensajeDeError(err, 'No se pudo cambiar el estado de la publicación.'))
+      });
     }
   }
 }

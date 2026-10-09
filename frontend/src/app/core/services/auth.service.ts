@@ -1,79 +1,37 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { mensajeDeError } from '../http/api-error';
 import { UsuarioRefugio } from '../models/refugio.model';
 
 const STORAGE_KEY = 'mascotas_cba_refugio_user';
-
-const USUARIOS_MOCK: UsuarioRefugio[] = [
-  {
-    id_ciudadano: 1,
-    cuil: '20-12345678-9',
-    nombre: 'Martín',
-    apellido: 'Gómez',
-    correo: 'martin.gomez@huellitascba.org.ar',
-    telefono: '351-4567890',
-    id_refugio: 101,
-    refugio: {
-      id_refugio: 101,
-      razon_social: 'Asociación Protectora Huellitas Cordobesas',
-      correo: 'contacto@huellitascba.org.ar',
-      telefono: '0351-4890123',
-      domicilio: 'Av. Colón 4500, Córdoba Capital',
-      habilitacion_municipal: 'HAB-MUNIC-CBA-2024-0412'
-    }
-  },
-  {
-    id_ciudadano: 2,
-    cuil: '27-12345678-4',
-    nombre: 'Camila',
-    apellido: 'Fernández',
-    correo: 'camila@patitasdelsur.org.ar',
-    telefono: '351-7891234',
-    id_refugio: 102,
-    refugio: {
-      id_refugio: 102,
-      razon_social: 'Refugio Patitas del Sur',
-      correo: 'info@patitasdelsur.org.ar',
-      telefono: '0351-4998877',
-      domicilio: 'Av. Valparaíso 3200, Córdoba',
-      habilitacion_municipal: 'HAB-MUNIC-CBA-2023-0199'
-    }
-  }
-];
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
+  private http = inject(HttpClient);
   private currentUserSignal = signal<UsuarioRefugio | null>(this.getStoredUser());
 
   currentUser = computed(() => this.currentUserSignal());
   isAuthenticated = computed(() => this.currentUserSignal() !== null);
   currentRefugio = computed(() => this.currentUserSignal()?.refugio ?? null);
 
-  private getStoredUser(): UsuarioRefugio | null {
+  // =========================================================================
+  // RF15 – Autenticación interna (CUIL + clave) contra POST /auth/login
+  // =========================================================================
+  async login(cuil: string, clave: string): Promise<UsuarioRefugio> {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
+      const user = await firstValueFrom(
+        this.http.post<UsuarioRefugio>(`${environment.apiUrl}/auth/login`, { cuil: cuil.trim(), clave })
+      );
+      this.currentUserSignal.set(user);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+      return user;
+    } catch (err) {
+      throw new Error(mensajeDeError(err, 'Credenciales incorrectas o usuario no habilitado'));
     }
-  }
-
-  login(cuil: string, clave: string): Promise<UsuarioRefugio> {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const cleanCuil = cuil.trim();
-        const user = USUARIOS_MOCK.find(u => u.cuil === cleanCuil || u.cuil.replace(/-/g, '') === cleanCuil.replace(/-/g, ''));
-        
-        if (user && clave.length >= 4) {
-          this.currentUserSignal.set(user);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-          resolve(user);
-        } else {
-          reject(new Error('Credenciales incorrectas o usuario no habilitado'));
-        }
-      }, 400);
-    });
   }
 
   logout(): void {
@@ -81,13 +39,15 @@ export class AuthService {
     localStorage.removeItem(STORAGE_KEY);
   }
 
-  seleccionarUsuarioMock(id: number): void {
-    const user = USUARIOS_MOCK.find(u => u.id_ciudadano === id) || null;
-    this.currentUserSignal.set(user);
-    if (user) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
+  // =========================================================================
+  // Persistencia de sesión (solo el usuario autenticado; no hay tokens)
+  // =========================================================================
+  private getStoredUser(): UsuarioRefugio | null {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
     }
   }
 }

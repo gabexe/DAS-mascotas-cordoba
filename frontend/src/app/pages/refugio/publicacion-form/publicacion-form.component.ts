@@ -2,6 +2,7 @@ import { Component, ElementRef, ViewChild, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { mensajeDeError } from '../../../core/http/api-error';
 import { PublicacionService } from '../../../core/services/publicacion.service';
 import { NuevaPublicacionDTO } from '../../../core/models/publicacion.model';
 
@@ -730,6 +731,11 @@ export class PublicacionFormComponent {
       return;
     }
 
+    if (!this.formData.foto.trim()) {
+      alert('Por favor agregue una fotografía de la mascota');
+      return;
+    }
+
     if (!this.formData.caracteristicas_mascota.trim()) {
       alert('Por favor complete la descripción y características de la mascota');
       return;
@@ -746,13 +752,17 @@ export class PublicacionFormComponent {
       this.router.navigate(['/login']);
       return;
     }
-    const refugioId = refugio.id_refugio;
 
     this.saving.set(true);
-    setTimeout(() => {
-      this.pubService.crearPublicacion(this.formData, refugioId);
-      this.saving.set(false);
-      this.router.navigate(['/publicaciones']);
-    }, 350);
+    this.pubService.crearPublicacion({ ...this.formData, anio_nacimiento: Number(this.formData.anio_nacimiento) }).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.router.navigate(['/publicaciones']);
+      },
+      error: err => {
+        this.saving.set(false);
+        alert(mensajeDeError(err, 'No se pudo registrar la publicación.'));
+      }
+    });
   }
 }
