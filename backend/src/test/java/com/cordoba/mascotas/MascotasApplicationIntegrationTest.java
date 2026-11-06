@@ -1,17 +1,21 @@
 package com.cordoba.mascotas;
 
-import com.cordoba.mascotas.auth.AuthService;
+import com.cordoba.mascotas.auth.AuthController;
 import com.cordoba.mascotas.auth.LoginRequest;
-import com.cordoba.mascotas.auth.UsuarioRefugioDTO;
+import com.cordoba.mascotas.dominio.Ciudadano;
 import com.cordoba.mascotas.dominio.EstadoPublicacion;
+import com.cordoba.mascotas.dominio.PublicacionAdopcion;
+import com.cordoba.mascotas.publicaciones.CambioEstadoDTO;
 import com.cordoba.mascotas.publicaciones.NuevaPublicacionDTO;
-import com.cordoba.mascotas.publicaciones.PublicacionResponseDTO;
-import com.cordoba.mascotas.publicaciones.PublicacionService;
+import com.cordoba.mascotas.publicaciones.PublicacionController;
+import com.cordoba.mascotas.shared.AutenticacionInvalidaException;
 import com.cordoba.mascotas.shared.TransicionEstadoInvalidaException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -26,41 +30,51 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MascotasApplicationIntegrationTest {
 
     @Autowired
-    private AuthService authService;
+    private AuthController authController;
 
     @Autowired
-    private PublicacionService publicacionService;
+    private PublicacionController publicacionController;
 
     @Test
     @DisplayName("Contexto levanta y autentica con datos reales de la BD SQL Server")
     void testAutenticacionConBaseDeDatosReal() {
-        UsuarioRefugioDTO usuario = authService.login(new LoginRequest("20-12345678-9", "1234"));
+        ResponseEntity<Ciudadano> response = authController.login(new LoginRequest("20-12345678-9", "1234"));
 
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        Ciudadano usuario = response.getBody();
         assertNotNull(usuario);
-        assertEquals("Martín", usuario.nombre());
-        assertEquals("Gómez", usuario.apellido());
-        assertEquals(101, usuario.idRefugio());
-        assertNotNull(usuario.refugio());
-        assertEquals("Asociación Protectora Huellitas Cordobesas", usuario.refugio().razonSocial());
+        assertEquals("Martín", usuario.getNombre());
+        assertEquals("Gómez", usuario.getApellido());
+        assertEquals(101, usuario.getIdRefugio());
+        assertNotNull(usuario.getRefugio());
+        assertEquals("Asociación Protectora Huellitas Cordobesas", usuario.getRefugio().getRazonSocial());
     }
 
     @Test
     @DisplayName("Consulta de publicaciones sembradas en SQL Server retorna datos completos")
     void testListadoPublicacionesSembradas() {
-        List<PublicacionResponseDTO> publicaciones = publicacionService.listarPublicaciones(null, null, null);
+        ResponseEntity<List<PublicacionAdopcion>> response = publicacionController.listar(null, null, null, null, null);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
 
+        List<PublicacionAdopcion> publicaciones = response.getBody();
         assertNotNull(publicaciones);
         assertFalse(publicaciones.isEmpty());
         assertTrue(publicaciones.size() >= 5);
 
         // Filtrar por refugio Huellitas Cordobesas (101)
-        List<PublicacionResponseDTO> huellitas = publicacionService.listarPublicaciones(101, null, null);
+        ResponseEntity<List<PublicacionAdopcion>> huellitasResponse = publicacionController.listar(101, null, null, null, null);
+        assertEquals(HttpStatus.OK, huellitasResponse.getStatusCode());
+        List<PublicacionAdopcion> huellitas = huellitasResponse.getBody();
+        assertNotNull(huellitas);
         assertFalse(huellitas.isEmpty());
 
         // Filtrar por término de búsqueda predictiva
-        List<PublicacionResponseDTO> busquedaMilo = publicacionService.listarPublicaciones(101, null, "Milo");
+        ResponseEntity<List<PublicacionAdopcion>> busquedaResponse = publicacionController.listar(101, null, null, null, "Milo");
+        assertEquals(HttpStatus.OK, busquedaResponse.getStatusCode());
+        List<PublicacionAdopcion> busquedaMilo = busquedaResponse.getBody();
+        assertNotNull(busquedaMilo);
         assertEquals(1, busquedaMilo.size());
-        assertEquals("Milo", busquedaMilo.get(0).mascota().nombre());
+        assertEquals("Milo", busquedaMilo.get(0).getMascota().getNombre());
     }
 
     @Test
@@ -80,29 +94,46 @@ class MascotasApplicationIntegrationTest {
             "Patio seguro y tiempo para paseos"
         );
 
-        PublicacionResponseDTO creada = publicacionService.crearPublicacion(nueva, 101);
+        ResponseEntity<PublicacionAdopcion> responseCrear = publicacionController.crear(nueva, 101, null, null);
+        assertEquals(HttpStatus.CREATED, responseCrear.getStatusCode());
+
+        PublicacionAdopcion creada = responseCrear.getBody();
         assertNotNull(creada);
-        assertNotNull(creada.nroPublicacion());
-        assertNotNull(creada.mascota());
-        assertEquals("Rocky Integration", creada.mascota().nombre());
-        assertEquals("Activa", creada.estadoPublicacion());
+        assertNotNull(creada.getNroPublicacion());
+        assertNotNull(creada.getMascota());
+        assertEquals("Rocky Integration", creada.getMascota().getNombre());
+        assertEquals("Activa", creada.getEstadoPublicacion().name());
 
         // Transición: Activa -> Pausada
-        PublicacionResponseDTO pausada = publicacionService.cambiarEstado(creada.nroPublicacion(), EstadoPublicacion.Pausada);
-        assertEquals("Pausada", pausada.estadoPublicacion());
+        ResponseEntity<PublicacionAdopcion> respPausada = publicacionController.cambiarEstado(
+            creada.getNroPublicacion(), new CambioEstadoDTO("Pausada"), 101, null, null
+        );
+        assertEquals(HttpStatus.OK, respPausada.getStatusCode());
+        assertNotNull(respPausada.getBody());
+        assertEquals("Pausada", respPausada.getBody().getEstadoPublicacion().name());
 
         // Transición: Pausada -> Activa
-        PublicacionResponseDTO reactivada = publicacionService.cambiarEstado(creada.nroPublicacion(), EstadoPublicacion.Activa);
-        assertEquals("Activa", reactivada.estadoPublicacion());
+        ResponseEntity<PublicacionAdopcion> respActiva = publicacionController.cambiarEstado(
+            creada.getNroPublicacion(), new CambioEstadoDTO("Activa"), 101, null, null
+        );
+        assertEquals(HttpStatus.OK, respActiva.getStatusCode());
+        assertNotNull(respActiva.getBody());
+        assertEquals("Activa", respActiva.getBody().getEstadoPublicacion().name());
 
         // Transición: Activa -> Finalizada
-        PublicacionResponseDTO finalizada = publicacionService.cambiarEstado(creada.nroPublicacion(), EstadoPublicacion.Finalizada);
-        assertEquals("Finalizada", finalizada.estadoPublicacion());
+        ResponseEntity<PublicacionAdopcion> respFinalizada = publicacionController.cambiarEstado(
+            creada.getNroPublicacion(), new CambioEstadoDTO("Finalizada"), 101, null, null
+        );
+        assertEquals(HttpStatus.OK, respFinalizada.getStatusCode());
+        assertNotNull(respFinalizada.getBody());
+        assertEquals("Finalizada", respFinalizada.getBody().getEstadoPublicacion().name());
 
         // Transición rechazada: Finalizada -> Activa (Inmutable)
         assertThrows(
             TransicionEstadoInvalidaException.class,
-            () -> publicacionService.cambiarEstado(creada.nroPublicacion(), EstadoPublicacion.Activa)
+            () -> publicacionController.cambiarEstado(
+                creada.getNroPublicacion(), new CambioEstadoDTO("Activa"), 101, null, null
+            )
         );
     }
 
@@ -125,7 +156,7 @@ class MascotasApplicationIntegrationTest {
 
         IllegalArgumentException ex = assertThrows(
             IllegalArgumentException.class,
-            () -> publicacionService.crearPublicacion(duplicado, 101)
+            () -> publicacionController.crear(duplicado, 101, null, null)
         );
 
         assertTrue(ex.getMessage().contains("Ya existe una mascota registrada con el microchip"));
@@ -138,8 +169,8 @@ class MascotasApplicationIntegrationTest {
         // Publicación 1001 pertenece a Huellitas Cordobesas (101)
         // Intentar modificar desde Patitas del Sur (102)
         assertThrows(
-            com.cordoba.mascotas.shared.AutenticacionInvalidaException.class,
-            () -> publicacionService.cambiarEstado(1001, EstadoPublicacion.Pausada, 102)
+            AutenticacionInvalidaException.class,
+            () -> publicacionController.cambiarEstado(1001, new CambioEstadoDTO("Pausada"), 102, null, null)
         );
     }
 }

@@ -5,6 +5,14 @@ spring:
   application:
     name: mascotas-cordoba-backend
 
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    serialization:
+      write-dates-as-timestamps: false
+      fail-on-empty-beans: false
+    deserialization:
+      fail-on-unknown-properties: false
+
   datasource:
     url: jdbc:sqlserver://localhost:1433;databaseName=mascotas_cordoba;encrypt=true;trustServerCertificate=true
     username: sa
