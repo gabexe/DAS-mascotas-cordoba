@@ -24,6 +24,39 @@ import { NuevaPublicacionDTO } from '../../../core/models/publicacion.model';
           <h1 class="page-title">Nueva Mascota para Adopción</h1>
         </header>
 
+        <!-- Banners de Notificación Reactivos No Bloqueantes -->
+        @if (errorMessage()) {
+          <div class="alert-banner alert-banner-error" role="alert" aria-live="assertive">
+            <div class="alert-banner-content">
+              <span class="alert-banner-icon" aria-hidden="true">⚠️</span>
+              <span class="alert-banner-text">{{ errorMessage() }}</span>
+            </div>
+            <button 
+              type="button" 
+              class="btn-alert-dismiss" 
+              (click)="dismissError()" 
+              aria-label="Cerrar notificación de error">
+              ✕
+            </button>
+          </div>
+        }
+
+        @if (successMessage()) {
+          <div class="alert-banner alert-banner-success" role="status" aria-live="polite">
+            <div class="alert-banner-content">
+              <span class="alert-banner-icon" aria-hidden="true">✓</span>
+              <span class="alert-banner-text">{{ successMessage() }}</span>
+            </div>
+            <button 
+              type="button" 
+              class="btn-alert-dismiss" 
+              (click)="dismissSuccess()" 
+              aria-label="Cerrar notificación de éxito">
+              ✕
+            </button>
+          </div>
+        }
+
         <form (ngSubmit)="guardarPublicacion()" class="pet-creation-layout">
           
           <!-- Columna Izquierda: Datos del Formulario -->
@@ -248,391 +281,7 @@ import { NuevaPublicacionDTO } from '../../../core/models/publicacion.model';
       </div>
     </div>
   `,
-  styles: [`
-    :host {
-      display: block;
-      width: 100%;
-    }
-
-    .page-wrapper {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 0 0 1.5vh 0;
-      box-sizing: border-box;
-    }
-
-    /* Contenedor tipo Ventana: Idéntico al de publicaciones (95% x 90% scrollable) */
-    .canvas-card {
-      width: 95%;
-      height: calc(100vh - 84px);
-      max-height: 89vh;
-      overflow-y: auto;
-      overflow-x: hidden;
-      background: var(--color-bg-surface); /* Crema Lienzo #FAF7F2, sin blancos puros */
-      border: 1px solid var(--color-border-subtle);
-      border-radius: 28px;
-      padding: 2.2rem 2.8rem;
-      box-shadow: 0 4px 24px rgba(38, 36, 34, 0.04);
-      scrollbar-width: thin;
-      scrollbar-color: var(--color-border-strong) transparent;
-      box-sizing: border-box;
-    }
-
-    .canvas-card::-webkit-scrollbar {
-      width: 7px;
-    }
-
-    .canvas-card::-webkit-scrollbar-thumb {
-      background-color: var(--color-border-strong);
-      border-radius: var(--radius-pill);
-    }
-
-    .canvas-card::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    .form-header {
-      margin-bottom: 2rem;
-    }
-
-    .back-link {
-      display: inline-block;
-      font-family: var(--font-heading);
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--color-accent);
-      text-decoration: none;
-      margin-bottom: 0.6rem;
-      transition: color 0.15s ease, transform 0.1s ease;
-    }
-
-    .back-link:hover {
-      color: var(--color-accent-hover);
-      transform: translateX(-2px);
-    }
-
-    .page-title {
-      margin: 0;
-      font-family: var(--font-heading);
-      font-size: 2.1rem;
-      font-weight: 700;
-      color: var(--color-text-main);
-      letter-spacing: -0.3px;
-    }
-
-    /* Layout en 2 Columnas */
-    .pet-creation-layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr);
-      gap: 3.5rem;
-      align-items: start;
-    }
-
-    /* Columna Izquierda */
-    .form-left-col {
-      display: flex;
-      flex-direction: column;
-      gap: 1.8rem;
-    }
-
-    .form-section {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .section-title {
-      margin: 0;
-      font-family: var(--font-heading);
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--color-text-main);
-    }
-
-    .fields-grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.1rem;
-    }
-
-    .form-field {
-      display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
-    }
-
-    .field-label {
-      font-family: var(--font-body);
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--color-text-main);
-    }
-
-    .field-input {
-      padding: 0.65rem 0.95rem;
-      background: var(--color-bg-surface);
-      border: 1px solid var(--color-border-strong);
-      border-radius: var(--radius-md);
-      font-family: var(--font-body);
-      font-size: 0.95rem;
-      color: var(--color-text-main);
-      outline: none;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    .field-input::placeholder {
-      color: var(--color-text-subtle);
-    }
-
-    .field-input:focus {
-      border-color: var(--color-accent);
-      box-shadow: 0 0 0 3px var(--color-accent-soft);
-    }
-
-    .select-input {
-      cursor: pointer;
-      appearance: auto;
-    }
-
-    .textarea-input {
-      resize: vertical;
-      min-height: 85px;
-      line-height: 1.45;
-    }
-
-    /* Columna Derecha */
-    .form-right-col {
-      display: flex;
-      flex-direction: column;
-      gap: 1.6rem;
-    }
-
-    /* Tarjeta de Carga de Foto con Snoopy */
-    .photo-dropzone-card {
-      background-color: var(--color-bg-muted); /* Arena Suave */
-      border: 2px dashed var(--color-border-strong);
-      border-radius: 26px;
-      padding: 2.2rem 1.8rem;
-      min-height: 440px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      position: relative;
-      user-select: none;
-    }
-
-    .photo-dropzone-card:hover, .photo-dropzone-card.is-dragover {
-      border-color: var(--color-accent);
-      background-color: var(--color-accent-soft);
-    }
-
-    .hidden-file-input {
-      display: none;
-    }
-
-    .photo-empty-content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.8rem;
-      width: 100%;
-    }
-
-    /* Título e Ilustración al 25% de opacidad según requerimiento */
-    .photo-prompt-title {
-      margin: 0;
-      font-family: var(--font-heading);
-      font-size: 1.65rem;
-      font-weight: 700;
-      color: var(--color-text-main);
-      opacity: 0.25; /* Opacidad al 25% */
-      letter-spacing: -0.2px;
-    }
-
-    .snoopy-illustration-container {
-      width: 100%;
-      max-width: 320px;
-      margin: 0.4rem 0;
-      display: flex;
-      justify-content: center;
-    }
-
-    .snoopy-photo-img {
-      width: 100%;
-      height: auto;
-      object-fit: contain;
-      opacity: 0.25; /* Opacidad al 25% */
-      filter: none; /* CERO glow */
-    }
-
-    .photo-drag-hint {
-      margin: 0;
-      font-family: var(--font-body);
-      font-size: 0.82rem;
-      color: var(--color-text-subtle);
-      opacity: 0.45;
-    }
-
-    .btn-toggle-url {
-      background: transparent;
-      border: none;
-      color: var(--color-accent);
-      font-family: var(--font-heading);
-      font-size: 0.82rem;
-      font-weight: 700;
-      cursor: pointer;
-      text-decoration: underline;
-      padding: 0.2rem;
-    }
-
-    .url-input-box {
-      width: 100%;
-      max-width: 320px;
-      margin-top: 0.4rem;
-    }
-
-    .url-field {
-      font-size: 0.85rem;
-      padding: 0.45rem 0.75rem;
-    }
-
-    /* Previsualización de Foto */
-    .photo-preview-wrapper {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .photo-preview-img {
-      width: 100%;
-      max-height: 360px;
-      object-fit: cover;
-      border-radius: 18px;
-      box-shadow: 0 4px 14px rgba(38, 36, 34, 0.08);
-      border: 1px solid var(--color-border-subtle);
-    }
-
-    .photo-preview-actions {
-      display: flex;
-      gap: 0.6rem;
-    }
-
-    .btn-change-photo, .btn-remove-photo {
-      font-family: var(--font-heading);
-      font-size: 0.82rem;
-      font-weight: 700;
-      padding: 0.35rem 0.9rem;
-      border-radius: var(--radius-pill);
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .btn-change-photo {
-      background: var(--color-accent);
-      color: var(--color-text-inverse);
-      border: none;
-    }
-
-    .btn-remove-photo {
-      background: var(--color-bg-surface);
-      border: 1px solid var(--color-border-strong);
-      color: #DC2626;
-    }
-
-    .btn-remove-photo:hover {
-      background: #FEE2E2;
-    }
-
-    /* Fila de Botones Inferiores */
-    .actions-row {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 0.9rem;
-      margin-top: 0.5rem;
-    }
-
-    .btn-cancel {
-      text-decoration: none;
-      color: var(--color-text-main);
-      background: var(--color-bg-surface);
-      font-family: var(--font-heading);
-      font-size: 0.92rem;
-      font-weight: 700;
-      padding: 0.65rem 1.6rem;
-      border-radius: var(--radius-pill);
-      border: 1px solid var(--color-border-strong);
-      transition: all 0.15s ease;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .btn-cancel:hover {
-      background: var(--color-bg-muted);
-    }
-
-    .btn-publish {
-      background: var(--color-accent);
-      color: var(--color-text-inverse); /* Crema Lienzo */
-      border: none;
-      font-family: var(--font-heading);
-      font-size: 0.92rem;
-      font-weight: 700;
-      padding: 0.65rem 1.8rem;
-      border-radius: var(--radius-pill);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: none; /* CERO glow */
-      transition: background-color 0.15s ease, transform 0.1s ease;
-    }
-
-    .btn-publish:hover:not(:disabled) {
-      background: var(--color-accent-hover);
-      transform: translateY(-1px);
-    }
-
-    .btn-publish:disabled {
-      background: var(--color-text-subtle);
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-
-    @media (max-width: 960px) {
-      .pet-creation-layout {
-        grid-template-columns: 1fr;
-        gap: 2.2rem;
-      }
-      .canvas-card {
-        padding: 1.8rem 1.4rem;
-      }
-      .photo-dropzone-card {
-        min-height: 320px;
-      }
-    }
-
-    @media (max-width: 600px) {
-      .canvas-card {
-        padding: 1.5rem 1rem;
-        border-radius: 20px;
-      }
-      .fields-grid-2 {
-        grid-template-columns: 1fr;
-      }
-    }
-  `]
+  styleUrl: './publicacion-form.component.css'
 })
 export class PublicacionFormComponent {
   private authService = inject(AuthService);
@@ -645,6 +294,8 @@ export class PublicacionFormComponent {
   isDragging = signal(false);
   showUrlInput = signal(false);
   fotoPreview = signal<string | null>(null);
+  errorMessage = signal<string | null>(null);
+  successMessage = signal<string | null>(null);
 
   formData: NuevaPublicacionDTO = {
     nombre: '',
@@ -657,6 +308,14 @@ export class PublicacionFormComponent {
     caracteristicas_mascota: '',
     condicion_adopcion: ''
   };
+
+  dismissError(): void {
+    this.errorMessage.set(null);
+  }
+
+  dismissSuccess(): void {
+    this.successMessage.set(null);
+  }
 
   triggerFileInput(): void {
     if (this.fileInputRef?.nativeElement) {
@@ -691,9 +350,10 @@ export class PublicacionFormComponent {
 
   private procesarArchivo(file: File): void {
     if (!file.type.startsWith('image/')) {
-      alert('Por favor seleccione un archivo de imagen válido (PNG, JPG, WebP).');
+      this.errorMessage.set('Por favor seleccione un archivo de imagen válido (PNG, JPG, WebP).');
       return;
     }
+    this.errorMessage.set(null);
     const reader = new FileReader();
     reader.onload = (e) => {
       const result = e.target?.result as string;
@@ -726,30 +386,33 @@ export class PublicacionFormComponent {
   }
 
   guardarPublicacion(): void {
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
     if (!this.formData.nombre.trim()) {
-      alert('Por favor ingrese el nombre de la mascota');
+      this.errorMessage.set('Por favor ingrese el nombre de la mascota.');
       return;
     }
 
     if (!this.formData.foto.trim()) {
-      alert('Por favor agregue una fotografía de la mascota');
+      this.errorMessage.set('Por favor agregue una fotografía de la mascota.');
       return;
     }
 
     if (!this.formData.caracteristicas_mascota.trim()) {
-      alert('Por favor complete la descripción y características de la mascota');
+      this.errorMessage.set('Por favor complete la descripción y características de la mascota.');
       return;
     }
 
     if (!this.formData.condicion_adopcion.trim()) {
-      alert('Por favor complete las condiciones de adopción requeridas');
+      this.errorMessage.set('Por favor complete las condiciones de adopción requeridas.');
       return;
     }
 
     const refugio = this.authService.currentRefugio();
     if (!refugio) {
-      alert('Debe iniciar sesión para registrar una publicación.');
-      this.router.navigate(['/login']);
+      this.errorMessage.set('Debe iniciar sesión para registrar una publicación. Redirigiendo a inicio de sesión...');
+      setTimeout(() => this.router.navigate(['/login']), 1800);
       return;
     }
 
@@ -757,11 +420,14 @@ export class PublicacionFormComponent {
     this.pubService.crearPublicacion({ ...this.formData, anio_nacimiento: Number(this.formData.anio_nacimiento) }).subscribe({
       next: () => {
         this.saving.set(false);
-        this.router.navigate(['/publicaciones']);
+        this.successMessage.set('¡Publicación registrada exitosamente! Redirigiendo al listado...');
+        setTimeout(() => {
+          this.router.navigate(['/publicaciones']);
+        }, 1200);
       },
       error: err => {
         this.saving.set(false);
-        alert(mensajeDeError(err, 'No se pudo registrar la publicación.'));
+        this.errorMessage.set(mensajeDeError(err, 'No se pudo registrar la publicación.'));
       }
     });
   }

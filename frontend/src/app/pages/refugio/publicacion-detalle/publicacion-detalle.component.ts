@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { mensajeDeError } from '../../../core/http/api-error';
 import { PublicacionService } from '../../../core/services/publicacion.service';
@@ -14,6 +14,22 @@ import { EstadoPublicacion, PublicacionAdopcion } from '../../../core/models/pub
       <div class="header">
         <a routerLink="/publicaciones" class="back-link">← Volver a Publicaciones</a>
       </div>
+
+      @if (publicacion() && errorMessage()) {
+        <div class="alert-banner alert-banner-error" role="alert" aria-live="assertive">
+          <div class="alert-banner-content">
+            <span class="alert-banner-icon" aria-hidden="true">⚠️</span>
+            <span class="alert-banner-text">{{ errorMessage() }}</span>
+          </div>
+          <button 
+            type="button" 
+            class="btn-alert-dismiss" 
+            (click)="errorMessage.set(null)" 
+            aria-label="Cerrar notificación de error">
+            ✕
+          </button>
+        </div>
+      }
 
       @if (loading()) {
         <div class="not-found"><p>Cargando publicación…</p></div>
@@ -95,173 +111,37 @@ import { EstadoPublicacion, PublicacionAdopcion } from '../../../core/models/pub
         </div>
       }
 
+      <!-- Modal de Confirmación para Finalizar Publicación -->
+      @if (showConfirmModal()) {
+        <div class="modal-backdrop" (click)="cancelarConfirmacion()">
+          <div 
+            class="modal-box" 
+            (click)="$event.stopPropagation()" 
+            role="dialog" 
+            aria-modal="true" 
+            aria-labelledby="modalConfirmTitle"
+            aria-describedby="modalConfirmDesc">
+            
+            <h3 class="modal-title" id="modalConfirmTitle">¿Finalizar publicación?</h3>
+            <p class="modal-text" id="modalConfirmDesc">
+              La mascota se marcará como <strong>Finalizada</strong> y su fotografía pasará a escala de grises. Ya no estará disponible para adopción y la acción es irreversible.
+            </p>
+            
+            <div class="modal-actions">
+              <button type="button" (click)="cancelarConfirmacion()" class="btn-modal-cancel">
+                Cancelar
+              </button>
+              <button type="button" (click)="confirmarCambioEstado()" class="btn-modal-confirm">
+                Sí, Finalizar
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
     </div>
   `,
-  styles: [`
-    .page-container {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 1.5rem 1.2rem;
-    }
-    .header {
-      margin-bottom: 1.2rem;
-    }
-    .back-link {
-      font-family: var(--font-heading);
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--color-accent);
-      text-decoration: none;
-      transition: color 0.15s ease;
-    }
-    .back-link:hover {
-      color: var(--color-accent-hover);
-    }
-    .card {
-      background: var(--color-bg-surface);
-      border: 1px solid var(--color-border-subtle);
-      border-radius: 24px;
-      overflow: hidden;
-      box-shadow: 0 4px 20px rgba(38, 36, 34, 0.04);
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: 360px 1fr;
-    }
-    .media {
-      padding: 1.8rem;
-      border-right: 1px solid var(--color-border-subtle);
-      display: flex;
-      flex-direction: column;
-      gap: 1.2rem;
-      background: var(--color-bg-muted);
-    }
-    .img {
-      width: 100%;
-      height: 260px;
-      object-fit: cover;
-      border-radius: 16px;
-      border: 1px solid var(--color-border-subtle);
-      transition: filter 0.25s ease, opacity 0.25s ease;
-    }
-    .img.is-grayscale {
-      filter: grayscale(100%);
-      opacity: 0.9;
-    }
-    .status-box {
-      display: flex;
-      flex-direction: column;
-      gap: 0.8rem;
-    }
-    .status-badge {
-      font-family: var(--font-heading);
-      font-size: 0.8rem;
-      font-weight: 700;
-      padding: 0.3rem 0.8rem;
-      border-radius: var(--radius-pill);
-      align-self: flex-start;
-    }
-    .status-activa { background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; }
-    .status-pausada { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
-    .status-finalizada { background: var(--color-bg-canvas); color: var(--color-text-muted); border: 1px solid var(--color-border-subtle); }
-    .action-buttons {
-      display: flex;
-      gap: 0.5rem;
-    }
-    .btn-state {
-      flex: 1;
-      padding: 0.5rem;
-      border-radius: var(--radius-pill);
-      border: 1px solid var(--color-border-strong);
-      background: var(--color-bg-surface);
-      font-family: var(--font-heading);
-      font-size: 0.82rem;
-      cursor: pointer;
-      font-weight: 700;
-      color: var(--color-text-main);
-      transition: all 0.15s ease;
-    }
-    .btn-pause:hover { background: #FEF3C7; border-color: #FCD34D; }
-    .btn-activate:hover { background: #DCFCE7; border-color: #86EFAC; }
-    .btn-finalize:hover { background: #FEE2E2; border-color: #FCA5A5; color: #991B1B; }
-    .finalized-text { font-family: var(--font-heading); font-size: 0.82rem; color: var(--color-text-subtle); font-weight: 600; text-align: center; }
-    .info {
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.4rem;
-    }
-    .title {
-      margin: 0;
-      font-family: var(--font-heading);
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: var(--color-text-main);
-    }
-    .subtitle {
-      margin: 0;
-      font-family: var(--font-body);
-      font-size: 0.95rem;
-      color: var(--color-text-muted);
-    }
-    .meta-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-      padding: 1rem 0;
-      border-top: 1px solid var(--color-border-subtle);
-      border-bottom: 1px solid var(--color-border-subtle);
-    }
-    .meta-item {
-      display: flex;
-      flex-direction: column;
-      gap: 0.2rem;
-    }
-    .label {
-      font-family: var(--font-body);
-      font-size: 0.75rem;
-      color: var(--color-text-subtle);
-      text-transform: uppercase;
-      font-weight: 700;
-      letter-spacing: 0.4px;
-    }
-    .val {
-      font-family: var(--font-body);
-      font-size: 0.95rem;
-      color: var(--color-text-main);
-      font-weight: 600;
-    }
-    .section {
-      display: flex;
-      flex-direction: column;
-      gap: 0.3rem;
-    }
-    .text {
-      margin: 0;
-      font-family: var(--font-body);
-      font-size: 0.92rem;
-      color: var(--color-text-muted);
-      line-height: 1.5;
-    }
-    .not-found {
-      text-align: center;
-      padding: 3rem;
-      background: var(--color-bg-surface);
-      border: 1px solid var(--color-border-subtle);
-      border-radius: 16px;
-      color: var(--color-text-main);
-    }
-    .btn-link {
-      color: var(--color-accent);
-      font-family: var(--font-heading);
-      font-weight: 700;
-      text-decoration: underline;
-    }
-    @media (max-width: 680px) {
-      .grid { grid-template-columns: 1fr; }
-      .media { border-right: none; border-bottom: 1px solid var(--color-border-subtle); }
-    }
-  `]
+  styleUrl: './publicacion-detalle.component.css'
 })
 export class PublicacionDetalleComponent implements OnInit {
   private route = inject(ActivatedRoute);
@@ -271,6 +151,15 @@ export class PublicacionDetalleComponent implements OnInit {
   publicacion = signal<PublicacionAdopcion | null>(null);
   loading = signal(true);
   errorMessage = signal<string | null>(null);
+  showConfirmModal = signal<boolean>(false);
+  pendingStateChange = signal<EstadoPublicacion | null>(null);
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (this.showConfirmModal()) {
+      this.cancelarConfirmacion();
+    }
+  }
 
   ngOnInit(): void {
     this.pubService.obtenerPublicacion(this.nroPublicacion).subscribe({
@@ -286,17 +175,35 @@ export class PublicacionDetalleComponent implements OnInit {
   }
 
   cambiarEstado(nuevoEstado: EstadoPublicacion): void {
-    const pub = this.publicacion();
-    if (pub) {
-      if (nuevoEstado === 'Finalizada') {
-        const confirmar = confirm('¿Desea finalizar esta publicación? La mascota ya no estará disponible para adopción y la acción es irreversible.');
-        if (!confirmar) return;
-      }
-      this.errorMessage.set(null);
-      this.pubService.cambiarEstado(pub.nro_publicacion, nuevoEstado).subscribe({
-        next: actualizada => this.publicacion.set(actualizada),
-        error: err => this.errorMessage.set(mensajeDeError(err, 'No se pudo cambiar el estado de la publicación.'))
-      });
+    if (nuevoEstado === 'Finalizada') {
+      this.pendingStateChange.set(nuevoEstado);
+      this.showConfirmModal.set(true);
+      return;
     }
+    this.ejecutarCambioEstado(nuevoEstado);
+  }
+
+  cancelarConfirmacion(): void {
+    this.showConfirmModal.set(false);
+    this.pendingStateChange.set(null);
+  }
+
+  confirmarCambioEstado(): void {
+    const estado = this.pendingStateChange();
+    this.showConfirmModal.set(false);
+    this.pendingStateChange.set(null);
+    if (estado) {
+      this.ejecutarCambioEstado(estado);
+    }
+  }
+
+  private ejecutarCambioEstado(nuevoEstado: EstadoPublicacion): void {
+    const pub = this.publicacion();
+    if (!pub) return;
+    this.errorMessage.set(null);
+    this.pubService.cambiarEstado(pub.nro_publicacion, nuevoEstado).subscribe({
+      next: actualizada => this.publicacion.set(actualizada),
+      error: err => this.errorMessage.set(mensajeDeError(err, 'No se pudo cambiar el estado de la publicación.'))
+    });
   }
 }

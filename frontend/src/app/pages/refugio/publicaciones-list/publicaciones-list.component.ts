@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { mensajeDeError } from '../../../core/http/api-error';
 import { PublicacionService } from '../../../core/services/publicacion.service';
-import { EstadoPublicacion } from '../../../core/models/publicacion.model';
+import { EstadoPublicacion, PublicacionAdopcion } from '../../../core/models/publicacion.model';
 
 @Component({
   selector: 'app-publicaciones-list',
@@ -219,540 +219,7 @@ import { EstadoPublicacion } from '../../../core/models/publicacion.model';
 
     </div>
   `,
-  styles: [`
-    :host {
-      display: block;
-      width: 100%;
-    }
-
-    .page-wrapper {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 0 0 1.5vh 0;
-      box-sizing: border-box;
-    }
-
-    /* Contenedor tipo Ventana: 95% horizontal y 90% vertical dejando espacio al header */
-    .canvas-card {
-      width: 95%;
-      height: calc(100vh - 84px);
-      max-height: 89vh;
-      overflow-y: auto;
-      overflow-x: hidden;
-      background: var(--color-bg-surface); /* Crema Lienzo #FAF7F2, sin blancos puros */
-      border: 1px solid var(--color-border-subtle);
-      border-radius: 28px;
-      padding: 2.2rem 2.8rem;
-      box-shadow: 0 4px 24px rgba(38, 36, 34, 0.04);
-      scrollbar-width: thin;
-      scrollbar-color: var(--color-border-strong) transparent;
-      box-sizing: border-box;
-    }
-
-    .canvas-card::-webkit-scrollbar {
-      width: 7px;
-    }
-
-    .canvas-card::-webkit-scrollbar-thumb {
-      background-color: var(--color-border-strong);
-      border-radius: var(--radius-pill);
-    }
-
-    .canvas-card::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    .page-title {
-      margin: 0 0 1.6rem 0;
-      font-family: var(--font-heading);
-      font-size: 2.1rem;
-      font-weight: 700;
-      color: var(--color-text-main); /* Carbón Cálido */
-      letter-spacing: -0.3px;
-    }
-
-    /* Fila de Filtros y Búsqueda */
-    .filters-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1.2rem;
-      margin-bottom: 2rem;
-    }
-
-    .filter-tabs {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-    }
-
-    .tab-pill {
-      background: var(--color-bg-surface);
-      border: 1px solid var(--color-border-subtle);
-      color: var(--color-text-muted);
-      padding: 0.45rem 1.05rem;
-      border-radius: var(--radius-pill);
-      font-family: var(--font-heading);
-      font-size: 0.88rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .tab-pill:hover {
-      background: var(--color-bg-muted);
-      color: var(--color-text-main);
-    }
-
-    .tab-pill.active {
-      background: var(--color-text-main); /* Carbón Cálido */
-      color: var(--color-text-inverse); /* Crema Lienzo, sin blancos puros */
-      border-color: var(--color-text-main);
-    }
-
-    .search-and-action {
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-      flex-wrap: wrap;
-    }
-
-    .search-box {
-      position: relative;
-    }
-
-    .search-input {
-      padding: 0.5rem 1.2rem;
-      border: 1px solid var(--color-border-subtle);
-      border-radius: var(--radius-pill);
-      font-family: var(--font-body);
-      font-size: 0.9rem;
-      color: var(--color-text-main);
-      background: var(--color-bg-surface);
-      outline: none;
-      width: 220px;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    .search-input::placeholder {
-      color: var(--color-text-subtle);
-    }
-
-    .search-input:focus {
-      border-color: var(--color-accent);
-      box-shadow: 0 0 0 3px var(--color-accent-soft);
-    }
-
-    .btn-create-post {
-      background: var(--color-accent);
-      color: var(--color-text-inverse); /* Crema Lienzo, sin blancos puros */
-      text-decoration: none;
-      padding: 0.52rem 1.3rem;
-      border-radius: var(--radius-pill);
-      font-family: var(--font-heading);
-      font-size: 0.9rem;
-      font-weight: 700;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: none; /* CERO glow */
-      transition: background-color 0.15s ease, transform 0.1s ease;
-      white-space: nowrap;
-    }
-
-    .btn-create-post:hover {
-      background: var(--color-accent-hover);
-      transform: translateY(-1px);
-    }
-
-    /* Grilla de Publicaciones */
-    .pets-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1.5rem;
-    }
-
-    @media (max-width: 1280px) {
-      .pets-grid {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
-
-    @media (max-width: 960px) {
-      .pets-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    @media (max-width: 600px) {
-      .pets-grid {
-        grid-template-columns: 1fr;
-      }
-      .canvas-card {
-        padding: 1.5rem 1rem;
-        border-radius: 20px;
-      }
-    }
-
-    /* Tarjeta de Mascota */
-    .pet-card {
-      background: var(--color-bg-surface);
-      border: 1px solid var(--color-border-subtle);
-      border-radius: 18px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 2px 10px rgba(38, 36, 34, 0.03);
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    .pet-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 24px rgba(38, 36, 34, 0.06);
-    }
-
-    .card-image-wrapper {
-      position: relative;
-      height: 195px;
-      background: var(--color-bg-muted);
-      overflow: hidden;
-    }
-
-    .image-link {
-      display: block;
-      width: 100%;
-      height: 100%;
-      text-decoration: none;
-    }
-
-    .pet-name-link {
-      color: inherit;
-      text-decoration: none;
-      transition: color 0.15s ease;
-    }
-
-    .pet-name-link:hover {
-      color: var(--color-accent);
-    }
-
-    .pet-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-      transition: filter 0.25s ease, opacity 0.25s ease;
-    }
-
-    /* Escala de grises oficial para publicaciones finalizadas según prototipo 2 */
-    .pet-image.is-grayscale {
-      filter: grayscale(100%);
-      opacity: 0.9;
-    }
-
-    /* Badge flotante con indicador de punto (dot) */
-    .floating-badge {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: var(--color-bg-surface);
-      border: 1px solid var(--color-border-subtle);
-      border-radius: var(--radius-pill);
-      padding: 0.25rem 0.65rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      box-shadow: 0 2px 8px rgba(38, 36, 34, 0.08);
-    }
-
-    .badge-text {
-      font-family: var(--font-heading);
-      font-size: 0.76rem;
-      font-weight: 700;
-      color: var(--color-text-main);
-    }
-
-    /* Puntos de estado */
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      display: inline-block;
-    }
-
-    .status-dot.dot-activa {
-      background-color: var(--dot-activa);
-    }
-
-    .status-dot.dot-pausada {
-      background-color: var(--dot-pausada);
-    }
-
-    .status-dot.dot-finalizada {
-      background-color: var(--dot-finalizada);
-    }
-
-    /* Cuerpo de la Tarjeta */
-    .card-body {
-      padding: 1.1rem 1.15rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      flex: 1;
-    }
-
-    .header-line {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 0.4rem;
-    }
-
-    .pet-name {
-      margin: 0;
-      font-family: var(--font-heading);
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: var(--color-text-main);
-      letter-spacing: -0.2px;
-      line-height: 1.1;
-    }
-
-    .pet-species-sex {
-      font-family: var(--font-body);
-      font-size: 0.8rem;
-      color: var(--color-text-muted);
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
-    .meta-line {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-family: var(--font-body);
-      font-size: 0.84rem;
-      color: var(--color-text-muted);
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid var(--color-border-subtle);
-    }
-
-    .pet-breed {
-      font-weight: 600;
-    }
-
-    .pet-age {
-      color: var(--color-text-subtle);
-      white-space: nowrap;
-    }
-
-    .info-section {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-
-    .section-tag {
-      font-family: var(--font-heading);
-      font-size: 0.68rem;
-      font-weight: 700;
-      color: var(--color-text-subtle);
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-
-    .description-text {
-      margin: 0;
-      font-family: var(--font-body);
-      font-size: 0.82rem;
-      color: var(--color-text-main);
-      line-height: 1.4;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .conditions-box {
-      background: var(--color-bg-muted); /* Arena Suave */
-      border: 1px solid var(--color-border-subtle);
-      border-radius: var(--radius-md);
-      padding: 0.65rem 0.8rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.2rem;
-    }
-
-    .conditions-text {
-      margin: 0;
-      font-family: var(--font-body);
-      font-size: 0.8rem;
-      color: var(--color-text-muted);
-      line-height: 1.35;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    /* Pie de Tarjeta */
-    .card-footer {
-      padding: 0.85rem 1.15rem;
-      border-top: 1px solid var(--color-border-subtle);
-      display: flex;
-      gap: 0.6rem;
-      align-items: center;
-      background: var(--color-bg-surface);
-    }
-
-    .btn-action {
-      flex: 1;
-      background: var(--color-bg-surface);
-      border: 1px solid var(--color-border-strong);
-      padding: 0.42rem;
-      border-radius: var(--radius-pill);
-      font-family: var(--font-heading);
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: var(--color-text-main);
-      cursor: pointer;
-      transition: all 0.15s ease;
-      text-align: center;
-    }
-
-    .btn-pause:hover {
-      background: #FEF3C7;
-      border-color: #FCD34D;
-      color: #92400E;
-    }
-
-    .btn-activate:hover {
-      background: #DCFCE7;
-      border-color: #86EFAC;
-      color: #166534;
-    }
-
-    .btn-finalize:hover {
-      background: #FEE2E2;
-      border-color: #FCA5A5;
-      color: #991B1B;
-    }
-
-    .finalized-text {
-      width: 100%;
-      text-align: center;
-      font-family: var(--font-heading);
-      font-size: 0.82rem;
-      color: var(--color-text-subtle);
-      font-weight: 600;
-      padding: 0.2rem 0;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 3rem 1.5rem;
-      color: var(--color-text-muted);
-      font-size: 0.95rem;
-    }
-
-    /* Modal de Confirmación */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(38, 36, 34, 0.45);
-      backdrop-filter: blur(3px);
-      z-index: 2000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1.5rem;
-      animation: fadeIn 0.15s ease-out;
-    }
-
-    .modal-box {
-      background: var(--color-bg-surface); /* Crema Lienzo */
-      border: 1px solid var(--color-border-subtle);
-      border-radius: 24px;
-      padding: 2.2rem;
-      max-width: 440px;
-      width: 100%;
-      box-shadow: var(--shadow-modal);
-      display: flex;
-      flex-direction: column;
-      gap: 1.2rem;
-      animation: scaleIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @keyframes scaleIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
-    .modal-title {
-      margin: 0;
-      font-family: var(--font-heading);
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: var(--color-text-main);
-    }
-
-    .modal-text {
-      margin: 0;
-      font-family: var(--font-body);
-      font-size: 0.92rem;
-      color: var(--color-text-muted);
-      line-height: 1.45;
-    }
-
-    .modal-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.8rem;
-      margin-top: 0.4rem;
-    }
-
-    .btn-modal-cancel {
-      background: var(--color-bg-muted);
-      border: 1px solid var(--color-border-subtle);
-      padding: 0.55rem 1.2rem;
-      border-radius: var(--radius-pill);
-      font-family: var(--font-heading);
-      font-size: 0.88rem;
-      font-weight: 700;
-      color: var(--color-text-main);
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .btn-modal-cancel:hover {
-      background: var(--color-border-subtle);
-    }
-
-    .btn-modal-confirm {
-      background: #DC2626;
-      border: none;
-      padding: 0.55rem 1.3rem;
-      border-radius: var(--radius-pill);
-      font-family: var(--font-heading);
-      font-size: 0.88rem;
-      font-weight: 700;
-      color: var(--color-text-inverse);
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .btn-modal-confirm:hover {
-      background: #B91C1C;
-    }
-  `]
+  styleUrl: './publicaciones-list.component.css'
 })
 export class PublicacionesListComponent implements OnInit {
   private authService = inject(AuthService);
@@ -763,7 +230,7 @@ export class PublicacionesListComponent implements OnInit {
   busqueda = signal<string>('');
   publicacionAFinalizar = signal<number | null>(null);
 
-  allPublicaciones = this.pubService.publicaciones;
+  publicaciones = signal<PublicacionAdopcion[]>([]);
   loading = signal(true);
   errorMessage = signal<string | null>(null);
 
@@ -774,28 +241,25 @@ export class PublicacionesListComponent implements OnInit {
   cargar(): void {
     this.loading.set(true);
     this.errorMessage.set(null);
-    this.pubService.cargarPublicaciones().subscribe({
-      next: () => this.loading.set(false),
-      error: err => {
+    this.pubService.listar().subscribe({
+      next: (data) => {
+        this.publicaciones.set(data);
+        this.loading.set(false);
+      },
+      error: (err) => {
         this.errorMessage.set(mensajeDeError(err, 'No se pudieron cargar las publicaciones.'));
         this.loading.set(false);
       }
     });
   }
 
-  publicacionesRefugio = computed(() => {
-    const currentRefugioId = this.refugio()?.id_refugio;
-    if (!currentRefugioId) return [];
-    return this.allPublicaciones().filter(p => p.id_refugio === currentRefugioId);
-  });
-
-  totalCount = computed(() => this.publicacionesRefugio().length);
-  activasCount = computed(() => this.publicacionesRefugio().filter(p => p.estado_publicacion === 'Activa').length);
-  pausadasCount = computed(() => this.publicacionesRefugio().filter(p => p.estado_publicacion === 'Pausada').length);
-  finalizadasCount = computed(() => this.publicacionesRefugio().filter(p => p.estado_publicacion === 'Finalizada').length);
+  totalCount = computed(() => this.publicaciones().length);
+  activasCount = computed(() => this.publicaciones().filter(p => p.estado_publicacion === 'Activa').length);
+  pausadasCount = computed(() => this.publicaciones().filter(p => p.estado_publicacion === 'Pausada').length);
+  finalizadasCount = computed(() => this.publicaciones().filter(p => p.estado_publicacion === 'Finalizada').length);
 
   publicacionesFiltradas = computed(() => {
-    let list = this.publicacionesRefugio();
+    let list = this.publicaciones();
     const filtro = this.filtroEstado();
     if (filtro !== 'TODAS') {
       list = list.filter(p => p.estado_publicacion === filtro);
@@ -803,7 +267,7 @@ export class PublicacionesListComponent implements OnInit {
     const q = this.busqueda().toLowerCase().trim();
     if (q) {
       list = list.filter(p => 
-        p.mascota?.nombre.toLowerCase().includes(q) || 
+        p.mascota?.nombre?.toLowerCase().includes(q) || 
         p.mascota?.raza?.toLowerCase().includes(q) ||
         p.mascota?.especie?.toLowerCase().includes(q)
       );
@@ -828,7 +292,14 @@ export class PublicacionesListComponent implements OnInit {
   cambiarEstado(nro: number, nuevoEstado: EstadoPublicacion): void {
     this.errorMessage.set(null);
     this.pubService.cambiarEstado(nro, nuevoEstado).subscribe({
-      error: err => this.errorMessage.set(mensajeDeError(err, 'No se pudo cambiar el estado de la publicación.'))
+      next: (actualizada) => {
+        this.publicaciones.update(lista =>
+          lista.map(p => (p.nro_publicacion === nro ? actualizada : p))
+        );
+      },
+      error: (err) => {
+        this.errorMessage.set(mensajeDeError(err, 'No se pudo cambiar el estado de la publicación.'));
+      }
     });
   }
 
