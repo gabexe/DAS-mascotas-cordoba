@@ -1,23 +1,18 @@
-# ==========================================
-# Mascotas Córdoba - Git Ignore Configuration
-# ==========================================
-
-# Dependencies
+# 1. Dependencias
 node_modules/
 */node_modules/
 
-# Compiled outputs
+# 2. Compilados Frontend (Angular 22)
 dist/
 */dist/
 out-tsc/
 */out-tsc/
 bazel-out/
-
-# Angular cache & tooling
 .angular/
 */.angular/
+.sass-cache/
 
-# Java / Spring Boot build artifacts
+# 3. Compilados Backend (Spring Boot 3 / Java 21 / Maven)
 target/
 */target/
 .gradle/
@@ -25,36 +20,37 @@ build/
 */build/
 *.jar
 *.war
+!backend/.mvn/wrapper/maven-wrapper.jar
 
-# Environment variables & secrets
+# 4. Variables de Entorno y Secretos
 .env
 .env.*
 !.env.example
+*.local
 
-# Affinity Designer
-*.af
-docs/*.af
-
-# Logs
+# 5. Logs y Depuración
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Temporary files & cache
+# 6. Temporales y Cobertura
 tmp/
 */tmp/
-.sass-cache/
 coverage/
 .history/
 
-# Operating System files
+# 7. Sistema Operativo
 .DS_Store
 Thumbs.db
 ehthumbs.db
+desktop.ini
 
-# IDEs and Editors
+# 8. Entornos de Desarrollo (IDEs)
 .idea/
+*.iml
+*.ipr
+*.iws
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -65,6 +61,13 @@ ehthumbs.db
 *.swp
 *.swo
 
-# Agent instructions (do not commit)
+# 9. Artefactos de Agentes de IA
+.agents/
+.gemini/
+
+# 10. Documentación Externa y Archivos de Control Local
+docs/
+*.af
+agent.md
 GEMINI.md
-README.md
+REFACTORING_PLAN.md
